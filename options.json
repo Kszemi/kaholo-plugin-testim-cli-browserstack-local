@@ -1,0 +1,6 @@
+{
+    "project": "my project",
+    "build": "build 4.5",
+    "browserstack.local": "true",
+    "browserstack.localIdentifier": "test"
+}

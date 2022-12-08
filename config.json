@@ -1,6 +1,6 @@
 {
-  "name": "kaholo-plugin-template",
-  "viewName": "Kaholo Template Plugin",
+  "name": "kaholo-plugin-testim-cli-browserstack-local",
+  "viewName": "Kaholo Testim BrowserStack Local plugin",
   "type": "executer",
   "main": "app.js",
   "execProgram": "node",
@@ -28,35 +28,74 @@
   ],
   "methods": [
     {
-      "name": "hello",
-      "viewName": "Say hello",
+      "name": "runTestim",
+      "viewName": "run Testim on BrowserStackLocal",
       "params": [
         {
-          "name": "helloName",
-          "viewName": "Hello Name",
+          "name": "bsApiKey",
+          "viewName": "BrowserStackApiKey",
+          "type": "vault",
+          "required": true,
+          "placeholder": "yzxxxxLm4vZxxxxEER2v",
+          "description": "BrowserStack Api Key",
+          "learnUrl": "https://www.browserstack.com/docs/iaam/security/manage-access-keys"
+        },
+        {
+          "name": "bsBinaryUrl",
+          "viewName": "URL of BrowserStackLocal binary",
           "type": "string",
           "required": false,
-          "placeholder": "World",
-          "default": "World",
-          "description": "The person to whom to say hello",
-          "learnUrl": "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
+          "default": "https://bstack-local-prod.s3.amazonaws.com/binaries/release/v8.8/BrowserStackLocal-linux-ia32.zip",
+          "description": "Provide URL of BrowserStackLocal binary if you do not want to use default one",
+          "learnUrl": "https://www.browserstack.com/docs/local-testing/releases-and-downloads"
         },
         {
-          "name": "secret",
-          "viewName": "Secret",
-          "type": "vault",
+          "name": "testimLocalId",
+          "viewName": "Testim Local Identifier",
+          "type": "string",
           "required": false,
-          "description": "A secret we might also say.",
-          "learnUrl": "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
+          "description": "Identifier of BrowserStack Local connection",
+          "learnUrl": "https://www.browserstack.com/docs/automate/cypress/local-testing/ci-cd"
         },
         {
-          "name": "saySecret",
-          "viewName": "Say secret",
-          "type": "boolean",
+          "name": "testimToken",
+          "viewName": "Testim token",
+          "type": "string",
+          "required": true,
+          "description": "Testim token, that can be found in testim page -> settings -> cli",
+          "learnUrl": "https://help.testim.io/docs/cli-settings"
+        },
+        {
+          "name": "testimProjectId",
+          "viewName": "Testim project id",
+          "type": "string",
+          "required": true,
+          "description": "Testim project id, that can be found in testim page -> settings -> cli",
+          "learnUrl": "https://help.testim.io/docs/the-command-line-cli#all-cli-parameters"
+        },
+        {
+          "name": "testimGrid",
+          "viewName": "Testim grid",
+          "type": "string",
+          "required": true,
+          "description": "Testim grid name to use",
+          "learnUrl": "https://help.testim.io/docs/grid-management"
+        },
+        {
+          "name": "testName",
+          "viewName": "Testim test name",
+          "type": "string",
+          "required": true,
+          "description": "Testim test name",
+          "learnUrl": "https://help.testim.io/docs/test-list"
+        },
+        {
+          "name": "bsOptions",
+          "viewName": "Json file with browserstack-options",
+          "type": "string",
           "required": false,
-          "default": false,
-          "description": "If checked we'll also say the secret.",
-          "learnUrl": "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
+          "description": "Options to run test. Overrides default options.",
+          "learnUrl": "https://www.browserstack.com/automate/capabilities"
         }
       ]
     }
