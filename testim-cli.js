@@ -4,6 +4,8 @@ const got = require("got");
 const { promisify } = require("util");
 const stream = require("stream");
 const childProcess = require("child_process");
+const { spawn } = require(childProcess);
+const execFile = promisify(childProcess.execFile);
 
 const pipeline = promisify(stream.pipeline);
 
@@ -20,7 +22,17 @@ async function runTestim(params) {
     bsOptions,
   } = params;
 
-  const bsLocalBinaryUrl = "https://bstack-local-prod.s3.amazonaws.com/binaries/release/v8.8/BrowserStackLocal-linux-ia32.zip";
+  // const bsApiKey = "eT2JSAzCbcBJMhCXmBUD";
+  // const testimLocalId = "test";
+  // const testimToken = "YXnKcSWZaYZbyxcWGTdYkdLYSFRApJB5kChGDUQe9t7gkw8HCA";
+  // const testimProjectId = "Cd0ZhnHSFIZsX4nwvUIR";
+  // const testimGrid = "exercise2";
+  // const testName = "bs-local";
+
+  // const bsLocalBinaryUrl = "https://bstack-local-prod.s3.amazonaws.com/binaries/release/v8.8/BrowserStackLocal-linux-ia32.zip";
+  // const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-linux-x64.zip";
+  const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-alpine.zip";
+  // const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-linux-ia32.zip"
   // const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-darwin-x64.zip";
 
   const fileName = "BrowserStackLocal.zip";
@@ -38,23 +50,35 @@ async function runTestim(params) {
     return decompressed;
   })();
 
-  console.info("unzipped", unzipped);
-
-  let child;
-  try {
-    child = childProcess.execFile(
-      `./dist/${unzipped[0].path}`,
-      ["--key", bsApiKey, "--force-local", "--local-identifier", testimLocalId],
-    );
-  } catch (error) {
-    console.error(error);
-  }
-
-  console.info("Child ========= ", child);
+  const { child } = execFile(`./dist/${unzipped[0].path}`, ["--key", bsApiKey, "--force-local", "--local-identifier", testimLocalId]);
 
   child.stdout.on("data", (data) => {
     console.info(data.toString());
   });
+  child.stderr.on("data", (data) => {
+    console.info(data.toString());
+  });
+
+  console.info("After exec bsLocalBinary");
+  // let child;
+  // try {
+  //   child = childProcess.execFile(
+  //     `./dist/${unzipped[0].path}`,
+  //     ["--key1", bsApiKey, "--force-local", "--local-identifier", testimLocalId],
+  //   );
+  // } catch (error) {
+  //   console.error(error);
+  // }
+  //
+  // console.info("After bs exec");
+  //
+  // child.stdout.on("data", (data) => {
+  //   console.info(data.toString());
+  // });
+  //
+  // child.stdout.on("data", (data) => {
+  //   console.info(data.toString());
+  // });
 
   // npm i -g @testim/testim-cli
   // && testim --token "YXnKcSWZaYZbyxcWGTdYkdLYSFRApJB5kChGDUQe9t7gkw8HCA"
@@ -65,25 +89,28 @@ async function runTestim(params) {
 
   const commandToExecute = `npm i -g @testim/testim-cli && testim --token ${testimToken} --project ${testimProjectId} --grid ${testimGrid} --name ${testName} --browserstack-options options.json`;
 
-  const spawnResult = await childProcess.spawn(commandToExecute, {
+  const { child: spawnChild } = spawn(commandToExecute, {
     shell: true,
   });
 
-  spawnResult.stdout.on("data", (data) => {
+  console.info("After testim exec");
+
+  spawnChild.stdout.on("data", (data) => {
     console.info(`stdout: ${data.toString()}`);
   });
 
-  spawnResult.stderr.on("data", (data) => {
+  spawnChild.stderr.on("data", (data) => {
     console.info(`stderr: ${data.toString()}`);
   });
 
-  spawnResult.on("exit", (code) => {
+  spawnChild.on("exit", (code) => {
     console.info(`child process exited with code ${code.toString()}`);
   });
 
   setTimeout(() => {
     child.kill("SIGKILL");
-  }, 360000);
+    return "DONE";
+  }, 120000);
 }
 
 async function downloadBrowserStackBinary(bsLocalBinaryUrl, fileName) {
@@ -103,7 +130,7 @@ async function downloadBrowserStackBinary(bsLocalBinaryUrl, fileName) {
     await pipeline(downloadStream, fileWriterStream);
     console.info(`File downloaded to ${fileName}`);
   } catch (error) {
-    console.error(`Something went wrong. ${error.message}`);
+    console.error(`Something went wrong when downloading BrowserstackLocal binary:  ${error.message}`);
   }
   return `${process.cwd()}/${fileName}`;
 }
@@ -111,3 +138,5 @@ async function downloadBrowserStackBinary(bsLocalBinaryUrl, fileName) {
 module.exports = {
   runTestim,
 };
+
+// runTestim({});
