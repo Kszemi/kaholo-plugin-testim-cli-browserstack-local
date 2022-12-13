@@ -18,6 +18,7 @@ async function runTestim(params) {
     testimGrid,
     testName,
     bsOptionsFile,
+    shouldInstallTestimCLI,
   } = params;
 
   const fileName = "BrowserStackLocal.zip";
@@ -32,7 +33,9 @@ async function runTestim(params) {
   try {
     bsAbortController = runBrowserStackLocal(unzipped, bsApiKey, localId);
 
-    await installTestim();
+    if (shouldInstallTestimCLI) {
+      await installTestim();
+    }
 
     const execTestimCmd = createTestimExecCmd(
       testimToken,

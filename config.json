@@ -6,16 +6,18 @@
   "execProgram": "node",
   "exposeRoute": false,
   "imgUrl": "logo.png",
-  "version": "2.0.0",
-  "description": "This plugin is only a generic template.",
+  "version": "1.0.0",
+  "description": "Run Testim tests on Browserstack locally",
   "category": [
     "Basic Tools"
   ],
   "keywords": [
-    "template",
+    "browserstack",
     "plugin",
     "kaholo",
-    "hello"
+    "testim",
+    "test",
+    "local"
   ],
   "settings": [
     {
@@ -62,9 +64,9 @@
       "params": [
         {
           "name": "bsBinaryUrl",
-          "viewName": "URL of BrowserStackLocal binary",
+          "viewName": "bsBinaryUrl",
           "type": "string",
-          "required": false,
+          "required": true,
           "default": "https://www.browserstack.com/browserstack-local/BrowserStackLocal-alpine.zip",
           "description": "Provide URL of BrowserStackLocal binary if you do not want to use default one",
           "learnUrl": "https://www.browserstack.com/docs/local-testing/releases-and-downloads"
@@ -86,6 +88,13 @@
           "learnUrl": "https://help.testim.io/docs/grid-management"
         },
         {
+          "name": "shouldInstallTestimCLI",
+          "viewName": "Install Latest Testim CLI",
+          "type": "boolean",
+          "description": "Installs the latest Testim CLI npm package globally on the Kaholo Agent",
+          "default": true
+        },
+        {
           "name": "testName",
           "viewName": "Testim test name",
           "type": "string",
@@ -95,27 +104,11 @@
         },
         {
           "name": "bsOptionsFile",
-          "viewName": "path to BrowserStackOptions",
-          "description": "path to the file with BrowserStackOptions",
-          "placeholder": "/twiddlebug/workspace/options.json",
+          "viewName": "Path to BrowserStackOptions",
+          "description": "path to the file with BrowserStackOptions (relative to /twiddlebug/workspace)",
+          "placeholder": "/options.json",
           "type": "string",
           "required": true
-        },
-        {
-          "name": "bsProject",
-          "viewName": "BrowserStack project name",
-          "type": "string",
-          "required": true,
-          "description": "BrowserStack project name"
-        },
-        {
-          "name": "bsBuild",
-          "viewName": "BrowserStack build name",
-          "type": "string",
-          "required": true,
-          "placeholder": "build 4.44",
-          "description": "BrowserStack build name",
-          "learnUrl": "https://www.browserstack.com/docs/automate/selenium/significance-of-build-names"
         }
       ]
     }
