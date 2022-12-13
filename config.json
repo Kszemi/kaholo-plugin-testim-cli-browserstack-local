@@ -94,18 +94,10 @@
           "learnUrl": "https://help.testim.io/docs/test-list"
         },
         {
-          "name": "workingDirectory",
-          "viewName": "Working Directory",
-          "description": "Path to a directory on the Kaholo agent where the command should be run",
-          "placeholder": "/twiddlebug/workspace",
-          "type": "string",
-          "required": false
-        },
-        {
           "name": "bsOptionsFile",
-          "viewName": "BrowserStackOptions JSON file",
-          "description": "Name of the file with BrowserStackOptions",
-          "placeholder": "/twiddlebug/workspace",
+          "viewName": "path to BrowserStackOptions",
+          "description": "path to the file with BrowserStackOptions",
+          "placeholder": "/twiddlebug/workspace/options.json",
           "type": "string",
           "required": true
         },

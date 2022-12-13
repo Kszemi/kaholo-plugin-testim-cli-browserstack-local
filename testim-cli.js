@@ -17,13 +17,12 @@ async function runTestim(params) {
     testimProjectId,
     testimGrid,
     testName,
-    optionsFile,
+    bsOptionsFile,
   } = params;
 
   const fileName = "BrowserStackLocal.zip";
 
   await downloadBrowserStackBinary(bsBinaryUrl, fileName);
-
 
   const unzipped = await unzip(fileName);
 
@@ -33,11 +32,15 @@ async function runTestim(params) {
   try {
     bsAbortController = runBrowserStackLocal(unzipped, bsApiKey, localId);
 
-    createBrowserStackOptionsJSON(options);
-
     await installTestim();
 
-    const execTestimCmd = createTestimExecCmd(testimToken, testimProjectId, testimGrid, testName);
+    const execTestimCmd = createTestimExecCmd(
+      testimToken,
+      testimProjectId,
+      testimGrid,
+      testName,
+      bsOptionsFile,
+    );
 
     let execTestimStdOut;
     let execTestimStdErr;
@@ -51,8 +54,8 @@ async function runTestim(params) {
       execOutput.stdout = handleTestimResponse(error, execOutput);
     }
   } finally {
+    console.info("Stopping BrowserStackLocal process.");
     if (bsAbortController) {
-      console.info("Stopping BrowserStackLocal process.");
       try {
         bsAbortController.abort();
       } catch (e) {
@@ -101,7 +104,7 @@ async function unzip(fileName) {
 function runBrowserStackLocal(unzipped, bsApiKey, localId) {
   const controller = new AbortController();
   const { signal } = controller;
-  const child = childProcess.execFile(`./dist/${unzipped[0].path}`, ["--key", bsApiKey, "--daemon", "start", "--force-local", "--local-identifier", localId], { signal });
+  const child = childProcess.execFile(`./dist/${unzipped[0].path}`, ["--key", bsApiKey, "--force-local", "--local-identifier", localId], { signal });
 
   child.stdout.on("data", (data) => {
     console.info(data.toString());
@@ -110,21 +113,6 @@ function runBrowserStackLocal(unzipped, bsApiKey, localId) {
     console.info(data.toString());
   });
   return controller;
-}
-
-function createBrowserStackOptionsJSON(bsProject, bsBuild, localId) { //todo load this from agent
-  const browserStackOptions = JSON.stringify({
-    project: bsProject,
-    build: bsBuild,
-    "browserstack.local": true,
-    "browserstack.localIdentifier": localId,
-  });
-
-  fs.writeFile("options.json", browserStackOptions, (err) => {
-    if (err) {
-      throw new Error("Error while creating browserStackOptions JSON file for testim");
-    }
-  });
 }
 
 async function installTestim() {
@@ -137,8 +125,8 @@ async function installTestim() {
   }
 }
 
-function createTestimExecCmd(testimToken, testimProjectId, testimGrid, testName) {
-  return `testim --token ${testimToken} --project ${testimProjectId} --grid ${testimGrid} --name ${testName} --browserstack-options options.json`;
+function createTestimExecCmd(testimToken, testimProjectId, testimGrid, testName, bsOptionsFile) {
+  return `testim --token ${testimToken} --project ${testimProjectId} --grid ${testimGrid} --name ${testName} --browserstack-options ${bsOptionsFile}`;
 }
 
 function handleTestimResponse(error) {
