@@ -4,113 +4,64 @@ const got = require("got");
 const { promisify } = require("util");
 const stream = require("stream");
 const childProcess = require("child_process");
-const { spawn } = require(childProcess);
-const execFile = promisify(childProcess.execFile);
 
+const exec = promisify(childProcess.exec);
 const pipeline = promisify(stream.pipeline);
 
 async function runTestim(params) {
-  console.info("STARTING METHOD");
   const {
     bsApiKey,
     bsBinaryUrl,
-    testimLocalId,
+    localId,
     testimToken,
     testimProjectId,
     testimGrid,
     testName,
-    bsOptions,
+    optionsFile,
   } = params;
-
-  // const bsApiKey = "eT2JSAzCbcBJMhCXmBUD";
-  // const testimLocalId = "test";
-  // const testimToken = "YXnKcSWZaYZbyxcWGTdYkdLYSFRApJB5kChGDUQe9t7gkw8HCA";
-  // const testimProjectId = "Cd0ZhnHSFIZsX4nwvUIR";
-  // const testimGrid = "exercise2";
-  // const testName = "bs-local";
-
-  // const bsLocalBinaryUrl = "https://bstack-local-prod.s3.amazonaws.com/binaries/release/v8.8/BrowserStackLocal-linux-ia32.zip";
-  // const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-linux-x64.zip";
-  const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-alpine.zip";
-  // const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-linux-ia32.zip"
-  // const bsLocalBinaryUrl = "https://www.browserstack.com/browserstack-local/BrowserStackLocal-darwin-x64.zip";
 
   const fileName = "BrowserStackLocal.zip";
 
-  const file = await downloadBrowserStackBinary(bsLocalBinaryUrl, fileName);
-  console.info("Downloaded file path: ", file);
+  await downloadBrowserStackBinary(bsBinaryUrl, fileName);
 
-  const unzipped = await (async () => {
-    let decompressed;
+
+  const unzipped = await unzip(fileName);
+
+  const execOutput = {};
+  let bsAbortController;
+
+  try {
+    bsAbortController = runBrowserStackLocal(unzipped, bsApiKey, localId);
+
+    createBrowserStackOptionsJSON(options);
+
+    await installTestim();
+
+    const execTestimCmd = createTestimExecCmd(testimToken, testimProjectId, testimGrid, testName);
+
+    let execTestimStdOut;
+    let execTestimStdErr;
+
     try {
-      decompressed = await decompress(fileName, "dist");
-    } catch (e) {
-      console.error(e);
+      ({ stdout: execTestimStdOut, stderr: execTestimStdErr } = await exec(execTestimCmd));
+      execOutput.stdout = execTestimStdOut;
+      execOutput.stderr = execTestimStdErr;
+    } catch (error) {
+      // unfortunately testim returns proper information about failed tests in error
+      execOutput.stdout = handleTestimResponse(error, execOutput);
     }
-    return decompressed;
-  })();
+  } finally {
+    if (bsAbortController) {
+      console.info("Stopping BrowserStackLocal process.");
+      try {
+        bsAbortController.abort();
+      } catch (e) {
+        console.error("Could not stop BrowserStackLocal process: ", e);
+      }
+    }
+  }
 
-  const { child } = execFile(`./dist/${unzipped[0].path}`, ["--key", bsApiKey, "--force-local", "--local-identifier", testimLocalId]);
-
-  child.stdout.on("data", (data) => {
-    console.info(data.toString());
-  });
-  child.stderr.on("data", (data) => {
-    console.info(data.toString());
-  });
-
-  console.info("After exec bsLocalBinary");
-  // let child;
-  // try {
-  //   child = childProcess.execFile(
-  //     `./dist/${unzipped[0].path}`,
-  //     ["--key1", bsApiKey, "--force-local", "--local-identifier", testimLocalId],
-  //   );
-  // } catch (error) {
-  //   console.error(error);
-  // }
-  //
-  // console.info("After bs exec");
-  //
-  // child.stdout.on("data", (data) => {
-  //   console.info(data.toString());
-  // });
-  //
-  // child.stdout.on("data", (data) => {
-  //   console.info(data.toString());
-  // });
-
-  // npm i -g @testim/testim-cli
-  // && testim --token "YXnKcSWZaYZbyxcWGTdYkdLYSFRApJB5kChGDUQe9t7gkw8HCA"
-  // --project "Cd0ZhnHSFIZsX4nwvUIR"
-  // --grid "exercise2"
-  // --name "bs-local"
-  // --browserstack-options sample.json
-
-  const commandToExecute = `npm i -g @testim/testim-cli && testim --token ${testimToken} --project ${testimProjectId} --grid ${testimGrid} --name ${testName} --browserstack-options options.json`;
-
-  const { child: spawnChild } = spawn(commandToExecute, {
-    shell: true,
-  });
-
-  console.info("After testim exec");
-
-  spawnChild.stdout.on("data", (data) => {
-    console.info(`stdout: ${data.toString()}`);
-  });
-
-  spawnChild.stderr.on("data", (data) => {
-    console.info(`stderr: ${data.toString()}`);
-  });
-
-  spawnChild.on("exit", (code) => {
-    console.info(`child process exited with code ${code.toString()}`);
-  });
-
-  setTimeout(() => {
-    child.kill("SIGKILL");
-    return "DONE";
-  }, 120000);
+  return execOutput;
 }
 
 async function downloadBrowserStackBinary(bsLocalBinaryUrl, fileName) {
@@ -118,7 +69,7 @@ async function downloadBrowserStackBinary(bsLocalBinaryUrl, fileName) {
   const fileWriterStream = fs.createWriteStream(fileName);
 
   let lastProgressPercentage = -10;
-  downloadStream.on("downloadProgress", ({ transferred, total, percent }) => {
+  downloadStream.on("BrowserStackLocal downloadProgress", ({ transferred, total, percent }) => {
     const percentage = Math.round(percent * 100);
     if (lastProgressPercentage + 9 < percentage) {
       console.info(`progress: ${transferred}/${total} (${percentage}%)`);
@@ -128,15 +79,82 @@ async function downloadBrowserStackBinary(bsLocalBinaryUrl, fileName) {
 
   try {
     await pipeline(downloadStream, fileWriterStream);
-    console.info(`File downloaded to ${fileName}`);
+    console.info(`BrowserstackLocal downloaded to ${fileName}`);
   } catch (error) {
-    console.error(`Something went wrong when downloading BrowserstackLocal binary:  ${error.message}`);
+    throw new Error(`Something went wrong when downloading BrowserstackLocal binary:  ${error.message}`);
   }
   return `${process.cwd()}/${fileName}`;
+}
+
+async function unzip(fileName) {
+  return (async () => {
+    let decompressed;
+    try {
+      decompressed = await decompress(fileName, "dist");
+    } catch (e) {
+      throw new Error(`Error during unpacking ${fileName}: ${e}`);
+    }
+    return decompressed;
+  })();
+}
+
+function runBrowserStackLocal(unzipped, bsApiKey, localId) {
+  const controller = new AbortController();
+  const { signal } = controller;
+  const child = childProcess.execFile(`./dist/${unzipped[0].path}`, ["--key", bsApiKey, "--daemon", "start", "--force-local", "--local-identifier", localId], { signal });
+
+  child.stdout.on("data", (data) => {
+    console.info(data.toString());
+  });
+  child.stderr.on("data", (data) => {
+    console.info(data.toString());
+  });
+  return controller;
+}
+
+function createBrowserStackOptionsJSON(bsProject, bsBuild, localId) { //todo load this from agent
+  const browserStackOptions = JSON.stringify({
+    project: bsProject,
+    build: bsBuild,
+    "browserstack.local": true,
+    "browserstack.localIdentifier": localId,
+  });
+
+  fs.writeFile("options.json", browserStackOptions, (err) => {
+    if (err) {
+      throw new Error("Error while creating browserStackOptions JSON file for testim");
+    }
+  });
+}
+
+async function installTestim() {
+  const instlTestimCmd = "npm i -g @testim/testim-cli";
+
+  try {
+    await exec(instlTestimCmd);
+  } catch (e) {
+    throw new Error(`Error during testim/cli installation: ${e}`);
+  }
+}
+
+function createTestimExecCmd(testimToken, testimProjectId, testimGrid, testName) {
+  return `testim --token ${testimToken} --project ${testimProjectId} --grid ${testimGrid} --name ${testName} --browserstack-options options.json`;
+}
+
+function handleTestimResponse(error) {
+  if (!error?.stdout.includes("Error:")) {
+    return error.stdout;
+  }
+
+  if (error?.stdout.includes("Error:")) {
+    const { stdout: errorOut, stderr: errorErr } = error;
+    throw new Error(`Error during testim command execution:\n ${JSON.stringify({ stdout: errorOut, stderr: errorErr })}`);
+  } else {
+    // error is not passed here as it may contain secrets (like testim token)
+    throw new Error("Error during testim command execution");
+  }
 }
 
 module.exports = {
   runTestim,
 };
-
-// runTestim({});

@@ -16,62 +16,66 @@
     "plugin",
     "kaholo",
     "hello"
-   ],
+  ],
   "settings": [
     {
-      "name": "helloName",
-      "viewName": "Default Hello Name",
+      "name": "testimGrid",
+      "viewName": "Default Grid",
       "type": "string",
-      "description": "The person to whom to say hello by default",
-      "learnUrl": "https://docs.apify.com/api/v2#/introduction/authentication"
+      "placeholder": "Testim-Grid"
     }
   ],
+  "auth": {
+    "authId": "testimBrowserStackAccount",
+    "params": [
+      {
+        "name": "bsApiKey",
+        "viewName": "BrowserStackApiKey",
+        "type": "vault",
+        "required": true,
+        "placeholder": "yzxxxxLm4vZxxxxEER2v",
+        "description": "BrowserStack Api Key",
+        "learnUrl": "https://www.browserstack.com/docs/iaam/security/manage-access-keys"
+      },
+      {
+        "name": "testimToken",
+        "viewName": "Testim token",
+        "type": "vault",
+        "required": true,
+        "description": "Testim token, that can be found in testim page -> settings -> cli",
+        "learnUrl": "https://help.testim.io/docs/cli-settings"
+      },
+      {
+        "name": "testimProjectId",
+        "viewName": "Testim project id",
+        "type": "string",
+        "required": true,
+        "description": "Testim project id, that can be found in testim page -> settings -> cli",
+        "learnUrl": "https://help.testim.io/docs/the-command-line-cli#all-cli-parameters"
+      }
+    ]
+  },
   "methods": [
     {
       "name": "runTestim",
       "viewName": "run Testim on BrowserStackLocal",
       "params": [
         {
-          "name": "bsApiKey",
-          "viewName": "BrowserStackApiKey",
-          "type": "vault",
-          "required": true,
-          "placeholder": "yzxxxxLm4vZxxxxEER2v",
-          "description": "BrowserStack Api Key",
-          "learnUrl": "https://www.browserstack.com/docs/iaam/security/manage-access-keys"
-        },
-        {
           "name": "bsBinaryUrl",
           "viewName": "URL of BrowserStackLocal binary",
           "type": "string",
           "required": false,
-          "default": "https://bstack-local-prod.s3.amazonaws.com/binaries/release/v8.8/BrowserStackLocal-linux-ia32.zip",
+          "default": "https://www.browserstack.com/browserstack-local/BrowserStackLocal-alpine.zip",
           "description": "Provide URL of BrowserStackLocal binary if you do not want to use default one",
           "learnUrl": "https://www.browserstack.com/docs/local-testing/releases-and-downloads"
         },
         {
-          "name": "testimLocalId",
-          "viewName": "Testim Local Identifier",
+          "name": "localId",
+          "viewName": "BrowserStack Local Identifier",
           "type": "string",
           "required": false,
           "description": "Identifier of BrowserStack Local connection",
           "learnUrl": "https://www.browserstack.com/docs/automate/cypress/local-testing/ci-cd"
-        },
-        {
-          "name": "testimToken",
-          "viewName": "Testim token",
-          "type": "string",
-          "required": true,
-          "description": "Testim token, that can be found in testim page -> settings -> cli",
-          "learnUrl": "https://help.testim.io/docs/cli-settings"
-        },
-        {
-          "name": "testimProjectId",
-          "viewName": "Testim project id",
-          "type": "string",
-          "required": true,
-          "description": "Testim project id, that can be found in testim page -> settings -> cli",
-          "learnUrl": "https://help.testim.io/docs/the-command-line-cli#all-cli-parameters"
         },
         {
           "name": "testimGrid",
@@ -90,12 +94,36 @@
           "learnUrl": "https://help.testim.io/docs/test-list"
         },
         {
-          "name": "bsOptions",
-          "viewName": "Json file with browserstack-options",
+          "name": "workingDirectory",
+          "viewName": "Working Directory",
+          "description": "Path to a directory on the Kaholo agent where the command should be run",
+          "placeholder": "/twiddlebug/workspace",
           "type": "string",
-          "required": false,
-          "description": "Options to run test. Overrides default options.",
-          "learnUrl": "https://www.browserstack.com/automate/capabilities"
+          "required": false
+        },
+        {
+          "name": "bsOptionsFile",
+          "viewName": "BrowserStackOptions JSON file",
+          "description": "Name of the file with BrowserStackOptions",
+          "placeholder": "/twiddlebug/workspace",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "bsProject",
+          "viewName": "BrowserStack project name",
+          "type": "string",
+          "required": true,
+          "description": "BrowserStack project name"
+        },
+        {
+          "name": "bsBuild",
+          "viewName": "BrowserStack build name",
+          "type": "string",
+          "required": true,
+          "placeholder": "build 4.44",
+          "description": "BrowserStack build name",
+          "learnUrl": "https://www.browserstack.com/docs/automate/selenium/significance-of-build-names"
         }
       ]
     }
