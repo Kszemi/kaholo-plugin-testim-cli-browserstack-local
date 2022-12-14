@@ -26,12 +26,14 @@ async function runTestim(params) {
   await downloadBrowserStackBinary(bsBinaryUrl, fileName);
 
   const unzipped = await unzip(fileName);
+  const filePath = `./dist/${unzipped[0].path}`;
+  fs.chmodSync(filePath, "777");
 
   const execOutput = {};
   let bsAbortController;
 
   try {
-    bsAbortController = runBrowserStackLocal(unzipped, bsApiKey, localId);
+    bsAbortController = runBrowserStackLocal(filePath, bsApiKey, localId);
 
     if (shouldInstallTestimCLI) {
       await installTestim();
@@ -104,10 +106,10 @@ async function unzip(fileName) {
   })();
 }
 
-function runBrowserStackLocal(unzipped, bsApiKey, localId) {
+function runBrowserStackLocal(filePath, bsApiKey, localId) {
   const controller = new AbortController();
   const { signal } = controller;
-  const child = childProcess.execFile(`./dist/${unzipped[0].path}`, ["--key", bsApiKey, "--force-local", "--local-identifier", localId], { signal });
+  const child = childProcess.execFile(filePath, ["--key", bsApiKey, "--force-local", "--local-identifier", localId], { signal });
 
   child.stdout.on("data", (data) => {
     console.info(data.toString());
