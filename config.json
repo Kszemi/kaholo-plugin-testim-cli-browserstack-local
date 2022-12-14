@@ -1,62 +1,114 @@
 {
-  "name": "kaholo-plugin-template",
-  "viewName": "Kaholo Template Plugin",
+  "name": "kaholo-plugin-testim-cli-browserstack-local",
+  "viewName": "Kaholo Testim BrowserStack Local plugin",
   "type": "executer",
   "main": "app.js",
   "execProgram": "node",
   "exposeRoute": false,
   "imgUrl": "logo.png",
-  "version": "2.0.0",
-  "description": "This plugin is only a generic template.",
+  "version": "1.0.0",
+  "description": "Run Testim tests on Browserstack locally",
   "category": [
     "Basic Tools"
   ],
   "keywords": [
-    "template",
+    "browserstack",
     "plugin",
     "kaholo",
-    "hello"
-   ],
+    "testim",
+    "test",
+    "local"
+  ],
   "settings": [
     {
-      "name": "helloName",
-      "viewName": "Default Hello Name",
+      "name": "testimGrid",
+      "viewName": "Default Grid",
       "type": "string",
-      "description": "The person to whom to say hello by default",
-      "learnUrl": "https://docs.apify.com/api/v2#/introduction/authentication"
+      "placeholder": "Testim-Grid"
     }
   ],
+  "auth": {
+    "authId": "testimBrowserStackAccount",
+    "params": [
+      {
+        "name": "bsApiKey",
+        "viewName": "BrowserStackApiKey",
+        "type": "vault",
+        "required": true,
+        "placeholder": "yzxxxxLm4vZxxxxEER2v",
+        "description": "BrowserStack Api Key",
+        "learnUrl": "https://www.browserstack.com/docs/iaam/security/manage-access-keys"
+      },
+      {
+        "name": "testimToken",
+        "viewName": "Testim token",
+        "type": "vault",
+        "required": true,
+        "description": "Testim token, that can be found in testim page -> settings -> cli",
+        "learnUrl": "https://help.testim.io/docs/cli-settings"
+      },
+      {
+        "name": "testimProjectId",
+        "viewName": "Testim project id",
+        "type": "string",
+        "required": true,
+        "description": "Testim project id, that can be found in testim page -> settings -> cli",
+        "learnUrl": "https://help.testim.io/docs/the-command-line-cli#all-cli-parameters"
+      }
+    ]
+  },
   "methods": [
     {
-      "name": "hello",
-      "viewName": "Say hello",
+      "name": "runTestim",
+      "viewName": "run Testim on BrowserStackLocal",
       "params": [
         {
-          "name": "helloName",
-          "viewName": "Hello Name",
+          "name": "bsBinaryUrl",
+          "viewName": "bsBinaryUrl",
+          "type": "string",
+          "required": true,
+          "default": "https://www.browserstack.com/browserstack-local/BrowserStackLocal-alpine.zip",
+          "description": "Provide URL of BrowserStackLocal binary if you do not want to use default one",
+          "learnUrl": "https://www.browserstack.com/docs/local-testing/releases-and-downloads"
+        },
+        {
+          "name": "localId",
+          "viewName": "BrowserStack Local Identifier",
           "type": "string",
           "required": false,
-          "placeholder": "World",
-          "default": "World",
-          "description": "The person to whom to say hello",
-          "learnUrl": "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
+          "description": "Identifier of BrowserStack Local connection",
+          "learnUrl": "https://www.browserstack.com/docs/automate/cypress/local-testing/ci-cd"
         },
         {
-          "name": "secret",
-          "viewName": "Secret",
-          "type": "vault",
-          "required": false,
-          "description": "A secret we might also say.",
-          "learnUrl": "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
+          "name": "testimGrid",
+          "viewName": "Testim grid",
+          "type": "string",
+          "required": true,
+          "description": "Testim grid name to use",
+          "learnUrl": "https://help.testim.io/docs/grid-management"
         },
         {
-          "name": "saySecret",
-          "viewName": "Say secret",
+          "name": "shouldInstallTestimCLI",
+          "viewName": "Install Latest Testim CLI",
           "type": "boolean",
-          "required": false,
-          "default": false,
-          "description": "If checked we'll also say the secret.",
-          "learnUrl": "https://en.wikipedia.org/wiki/%22Hello,_World!%22_program"
+          "description": "Installs the latest Testim CLI npm package globally on the Kaholo Agent",
+          "default": true
+        },
+        {
+          "name": "testName",
+          "viewName": "Testim test name",
+          "type": "string",
+          "required": true,
+          "description": "Testim test name",
+          "learnUrl": "https://help.testim.io/docs/test-list"
+        },
+        {
+          "name": "bsOptionsFile",
+          "viewName": "Path to BrowserStackOptions",
+          "description": "path to the file with BrowserStackOptions (relative to /twiddlebug/workspace)",
+          "placeholder": "/options.json",
+          "type": "string",
+          "required": true
         }
       ]
     }
