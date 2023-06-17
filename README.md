@@ -1,85 +1,42 @@
-# Kaholo SystemXYZ Plugin
-This plugin integrates ACME, inc. SystemXYZ with Kaholo, providing access to SystemXYZ's alerting functionality, for example sending a Ex message or setting an Zed alarm to notify someone of the results of a Kaholo Pipeline Action. For triggering Kaholo Pipelines from SystemXYZ, please see the Kaholo [SystemXYZ trigger](https://github.com/Kaholo/kaholo-trigger-systemxyz) instead.
+# Kaholo Testim CLI BrowserstackLocal Plugin
+This plugin allows pipelines to use the Testim CLI to run tests on Browserstack locally.
 
 ## Prerequisites
-This plugin works with SystemXYZ version 4.0 and later, both SaaS platform and locally hosted versions.
+The Testim CLI must be installed on the Kaholo Agent(s) to use this plugin. This happens by default. To install the Testim CLI manually and see the resulting output, one can also use the Command Line plugin to run command `npm i -g @testim/testim-cli`. Note that simply putting `@testim/testim-cli` in package.json of the plugin will not work.
 
-The following SystemXYZ APIs must be enabled for 3rd party access in the SystemXYZ Platform. The Kaholo plugin's service ID string is "kaholo-plugin-da2de162". SystemXYZ does not support 3rd party access to the Wy API so there are no Wy controller methods in the plugin.
-
->**SystemXYZ Ex API**
->
->**SystemXYZ Zed API**
-
-The SystemXYZ connectivity package must be installed on Kaholo agents. A `Test API` method is provided in the plugin. Check Parameter "Install API" in order to automatically install the SystemXYZ connectivity package. Alternatively, ask your Kaholo administrator to follow the [installation instructions](https://www.systemxyz.com.nz/install_connectivity_package/v4) on the SystemXYZ webite.
 
 ## Access and Authentication
-The plugin accesses SystemXYZ using the same URL as the web console, e.g. https://your-account.systemxyz.com.nz/. However, authentication with user/password is not permitted for automated processes.
+Authentication is controlled by means of a Testim CLI Access Token, Testim Project Id and Browserstack Access Key. These can be found at Setting | CLI when logged into the Testim Automate website. For example,
 
-Instead the plugin uses SystemXYZ service tokens to authenticate. A SystemXYZ service token is a string that begins `XYZ-`, for example `XYZ-9ef6df656f9db28d4feaac0c0c6855bc`.  To get an appropriate service token, ask your SystemXYZ administrator for one that has permissions for the following actions:
-* ex-send
-* ex-send-email (only if email feature is used)
-* zed-readgroups
-* zed-triggergroups
-* xyz-vieworg
-* xyz-viewalarms
+    npm i -g @testim/testim-cli && testim --token "CDbDF05hRsTCI49Y0lCuYbI49Y0lCuYbKPYbKPT3nUhx4klgbNQ" --project "cLaRJlTIXXeCLaRJlQr3" --grid "Testim-Grid"
 
-You will also what to specify which Zed groups you will access, or alternately if the service token is granted `zed-any`, the plugin will be able to read and trigger all SystemXYZ groups.
+In this example the Testim CLI Access Token is `CDbDF05hRsTCI49Y0lCuYbI49Y0lCuYbKPYbKPT3nUhx4klgbNQ` and the Testim Project Id is `cLaRJlTIXXeCLaRJlQr3`.
 
-You may have more than one service token, these are vaulted in the Kaholo Vault. The service token is needed for Parameter "XYZ Service Token" as described below.
+These two parameters are stored in Kaholo Accounts, which is found alongside Plugin Settings, accessed by clicking on the plugin's name in Kaholo's Setting | Plugins page. The Default Grid can also be configured there in Settings.
+
+Browserstack Access Key should be visible on the Browserstack main page, in the dropdown menu called "ACCESS KEY"
 
 ## Plugin Installation
 For download, installation, upgrade, downgrade and troubleshooting of plugins in general, see [INSTALL.md](./INSTALL.md).
 
-## Plugin Settings
-Plugin settings act as default parameter values. If configured in plugin settings, the action parameters may be left unconfigured. Action parameters configured anyway over-ride the plugin-level settings for that Action.
-* Default XYZ Endpoint - The URL of your SystemXYZ installation, e.g. `https://your-account.systemxyz.com.nz/`
-* Default Zed Alarm Group - The Zed Alarm Group to use with Zed alarm methods, e.g. `zed-group-one`. Not used for Ex message-related methods.
-* Default Service Token (Vault) - The service token, stored in the Kaholo vault for authentication and access. e.g. `XYZ-9ef6df656f9db28d4feaac0c0c6855bc`
+## Method: run Testim on BrowserStackLocal
+This method runs Testim test on BrowserStack Local instance.
 
-## Pipelining Alarm Messaging
-A common use case for this plugin is to prototype Wy controller notifications by catching Zed Hooks, applying logic, and sending Ex messages as appropriate. To do this the following steps are needed:
-1. Install and configure the Kaholo [SystemXYZ trigger](https://github.com/Kaholo/kaholo-trigger-systemxyz) to be activated by a [SystemXYZ Zed Hook](https://www.systemxyz.com.nz/zed_hooks/v4).
-1. Use the trigger to start your prototype Kaholo pipeline.
-1. Use method Read Zed Alarms to collect the active alarm list and details.
-1. Apply your logic using the Kaholo Code page and/or Kaholo Conditional Code.
-1. Use method Send Ex Message if your logic determines it appropriate.
+### Parameter: BrowserStack Local Identifier
+Optional paramter for defining local id of BrowserStackLocal instance.
 
-## Method: Test API
-This method does a trivial test of the SystemXYZ connectivity package installed on the Kaholo agent, in order to validate that it is installed correctly and can network connect to the XYZ Endpoint. It returns only the version number of the SystemXYZ system and does not require a service token.
+### Parameter: bsBinaryUrl
+Required paramter, where you can overwrite default value with the download URL for BrowserStackLocal binary. (Must be suitable for Linus Alpine);
 
-### Parameters
-Required parameters have an asterisk (*) next to their names.
-* XYZ Endpoint * - as described above in [plugin settings](#plugin-settings)
-* Install API (checkbox) - if checked and the connectivity package is not found on the agent, the plugin will attempt to automatically install it.
+### Parameter: Testim Grid 
+This is the name of the Testim Grid the command should work with. It will be included in the command for you with the `--grid` switch.
 
-## Method: Send Ex Message
-This method composes an Ex Message to send to SystemXYZ users and/or groups. Message bodies may be in JSON, MD, HTML, or plain text format. Malformed JSON, MD, or HTML results in a plain text message. Combinations of users and groups are permitted. Users listed who are also group members or member in more than one group get the message only once.
+### Parameter: Testim test name
+Name of the Testim test to run.
 
-> NOTE: Parameters left unconfigured get "Kaholo" by default, including message body and title. If parameter `Email` is selected, parameter `From` must be a valid user name or it will be rejected by SystemXYZ with `HTTP 404 - Page not found`. This also requires the service token have the special permission `ex-send-email`, otherwise you get the same HTTP 404 error.
+### Parameter: Path to BrowserStackOptions
+This is passed to Testim CLI command, that starts tests execution. 
+See more: https://www.browserstack.com/docs/automate/cypress/cypress-capabilities
 
-### Parameters
-Required parameters have an asterisk (*) next to their names.
-* XYZ Endpoint * - as described above in [plugin settings](#plugin-settings)
-* Service Token * - as described above in [plugin settings](#plugin-settings)
-* Message Title - plain text one-line title of the message
-* Message Body - the body of the message in JSON, MD, HTML, or plain text format
-* Recipients * - the list of recipients, either usernames or group names, one per line
-* From - indicates the source of the message, either a valid user name or arbitrary text string
-* Email - if checked and SystemXYZ is linked to an email system, the message is sent out as an email instead of a SystemXYZ Ex message.
-
-## Method: Read Zed Alarms
-This method reads a Zed Alarm group from SystemXYZ whether or not any of the alarms are active. It is commonly used with the Kaholo [SystemXYZ trigger](https://github.com/Kaholo/kaholo-trigger-systemxyz) and [SystemXYZ Zed Hooks](https://www.systemxyz.com.nz/zed_hooks/v4). The trigger provides the timely response to an alarm, while this method provides the details of the alarm.
-
-If parameter `Zed Hook Code` is configured, the details on the triggering alarm are provided. If parameter `Alarm Group` is provided the details on all alarms (active or not) are provided. If both are configured, details on both are provided, even if the code refers to an alarm not in that group. This is useful in overcoming cross-group limitations in SystemXYZ alarms.
-
-The Final Result in Kaholo is a JSON document of the same format as the equivalent [SystemXYZ Alarm Export](https://www.systemxyz.com.nz/alarm_export/v4).
-
-### Parameters
-Required parameters have an asterisk (*) next to their names.
-* XYZ Endpoint * - as described above in [plugin settings](#plugin-settings)
-* Service Token * - as described above in [plugin settings](#plugin-settings)
-* Zed Hook Code - a code string from Zed Hooks, e.g. `zed-20220329aad`
-* Zed Alarm Group - a Zed alarm group, e.g. `zed-group-one`
-
-## Method: Set Zed Alarm
-This method is not yet implemented. If you are interested in setting Zed alarms from Kaholo, please let us know! support@kaholo.io.
+### Parameter: Install Latest Testim CLI
+If checked, the latest Testim CLI will be installed before running the command. If already installed, unchecking this option may speed up the execution by a few seconds.
